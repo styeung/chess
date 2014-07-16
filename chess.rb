@@ -197,6 +197,9 @@ class Pawn < SteppingPiece
       if self.board.contains_enemy_piece?(@pos, [pos[0] + 1,pos[1] - 1])
         possible_deltas << [1,-1]
       end
+      if self.pos[0] == 1
+        possible_deltas << [2,0]
+      end
     elsif self.color == "white"
       possible_deltas << [-1,0]
       if self.board.contains_enemy_piece?(@pos, [pos[0] - 1,pos[1] - 1])
@@ -204,6 +207,9 @@ class Pawn < SteppingPiece
       end
       if self.board.contains_enemy_piece?(@pos, [pos[0] - 1,pos[1] + 1])
         possible_deltas << [-1,1]
+      end
+      if self.pos[0] == 6
+        possible_deltas << [-2,0]
       end
     end
     possible_deltas
@@ -303,6 +309,14 @@ class Board
     return false
   end
 
+  def still_in_check(start_pos,end_pos,color)
+    if self.in_check(color)
+      return true if self[start_pos].move_into_check?(end_pos)
+    end
+
+    false
+  end
+
   def checkmate?(color)
     if self.in_check(color)
       self.grid.each do |row|
@@ -322,6 +336,7 @@ class Board
 
     raise RuntimeError.new("You have no piece there") if self[start].nil?
     raise RuntimeError.new("You cannot move there") if !self[start].moves.include?(end_pos)
+    raise RuntimeError.new("You are in check") if self.still_in_check(start,end_pos,self[start].color)
     raise RuntimeError.new("This puts you in check") if self[start].move_into_check?(end_pos)
 
     self[end_pos] = self[start].class.new(start, self.dup, self[start].color)
@@ -446,22 +461,20 @@ class Game
 
   def play
     turn = 1
-    turn_color = "white"
+
+    turn_colors = ["black","white"]
+    turn_color = turn_colors[0]
 
     until @board.checkmate?(turn_color)
       @board.render
 
-      if turn % 2 == 0
-        turn_color = "black"
-      else
-        turn_color = "white"
-      end
+      turn_color = turn_colors[turn % 2]
 
       puts "#{turn_color.capitalize} turn"
       puts "Enter the coordinates of the piece you would like to move:"
       start_pos = gets.chomp.split(",").map { |num| num.to_i }
 
-      if @board[start_pos].color != turn_color
+      if !@board[start_pos].nil? && @board[start_pos].color != turn_color
         puts "That is not your piece!"
         next
       end
@@ -472,13 +485,19 @@ class Game
       begin
         @board.move(start_pos, end_pos)
       rescue RuntimeError => e
-        p @board.checkmate?(turn_color)
         puts e.message
         next
       end
 
+      if @board.checkmate?(turn_colors[(turn+1) % 2])
+        puts "Checkmate!"
+      end
+
+      if @board.in_check(turn_colors[(turn+1) % 2])
+        puts "Check!"
+      end
+
       turn += 1
-      #debugger
 
     end
   end
