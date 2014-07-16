@@ -381,69 +381,104 @@ class Board
   end
 
   def render
-    (0...8).each do |row|
-      (0...8).each do |column|
-        if !self[[row,column]].nil?
-          if row % 2 == column % 2
-            case [self[[row,column]].class, self[[row,column]].color]
-            when [King, "black"]
-              print "♚"
-            when [King, "white"]
-              print "♔"
-            when [Queen, "black"]
-              print "♛"
-            when [Queen, "white"]
-              print "♕"
-            when [Rook, "black"]
-              print "♜"
-            when [Rook, "white"]
-              print "♖"
-            when [Bishop, "black"]
-              print "♝"
-            when [Bishop, "white"]
-              print "♗"
-            when [Knight, "black"]
-              print "♞"
-            when [Knight, "white"]
-              print "♘"
-            when [Pawn, "black"]
-              print "♟"
-            when [Pawn, "white"]
-              print "♙"
-            end
+    column_labels = {
+      1 => "a",
+      2 => "b",
+      3 => "c",
+      4 => "d",
+      5 => "e",
+      6 => "f",
+      7 => "g",
+      8 => "h"
+    }
+
+    row_labels = {
+      1 => "8",
+      2 => "7",
+      3 => "6",
+      4 => "5",
+      5 => "4",
+      6 => "3",
+      7 => "2",
+      8 => "1"
+    }
+    (0..9).each do |row|
+      (0..9).each do |column|
+        if row == 0 || row == 9
+          if column_labels[column]
+            print " #{column_labels[column]} "
           else
-            case [self[[row,column]].class, self[[row,column]].color]
-            when [King, "black"]
-              print "♚".colorize(:background => :light_black)
-            when [King, "white"]
-              print "♔".colorize(:background => :light_black)
-            when [Queen, "black"]
-              print "♛".colorize(:background => :light_black)
-            when [Queen, "white"]
-              print "♕".colorize(:background => :light_black)
-            when [Rook, "black"]
-              print "♜".colorize(:background => :light_black)
-            when [Rook, "white"]
-              print "♖".colorize(:background => :light_black)
-            when [Bishop, "black"]
-              print "♝".colorize(:background => :light_black)
-            when [Bishop, "white"]
-              print "♗".colorize(:background => :light_black)
-            when [Knight, "black"]
-              print "♞".colorize(:background => :light_black)
-            when [Knight, "white"]
-              print "♘".colorize(:background => :light_black)
-            when [Pawn, "black"]
-              print "♟".colorize(:background => :light_black)
-            when [Pawn, "white"]
-              print "♙".colorize(:background => :light_black)
-            end
+            print "   "
+          end
+        elsif column == 0 || column == 9
+          if row_labels[row]
+            print " #{row_labels[row]} "
+          else
+            print "   "
           end
         else
-          if row % 2 != column % 2
-            print " ".colorize(:background => :light_black)
+          if !self[[row - 1,column - 1]].nil?
+            if (row-1) % 2 == (column-1) % 2
+              case [self[[row - 1,column - 1]].class, self[[row - 1,column - 1]].color]
+              when [King, "black"]
+                print " ♚ "
+              when [King, "white"]
+                print " ♔ "
+              when [Queen, "black"]
+                print " ♛ "
+              when [Queen, "white"]
+                print " ♕ "
+              when [Rook, "black"]
+                print " ♜ "
+              when [Rook, "white"]
+                print " ♖ "
+              when [Bishop, "black"]
+                print " ♝ "
+              when [Bishop, "white"]
+                print " ♗ "
+              when [Knight, "black"]
+                print " ♞ "
+              when [Knight, "white"]
+                print " ♘ "
+              when [Pawn, "black"]
+                print " ♟ "
+              when [Pawn, "white"]
+                print " ♙ "
+              end
+            else
+              case [self[[row - 1,column - 1]].class, self[[row - 1,column - 1]].color]
+              when [King, "black"]
+                print " ♚ ".colorize(:background => :light_black)
+              when [King, "white"]
+                print " ♔ ".colorize(:background => :light_black)
+              when [Queen, "black"]
+                print " ♛ ".colorize(:background => :light_black)
+              when [Queen, "white"]
+                print " ♕ ".colorize(:background => :light_black)
+              when [Rook, "black"]
+                print " ♜ ".colorize(:background => :light_black)
+              when [Rook, "white"]
+                print " ♖ ".colorize(:background => :light_black)
+              when [Bishop, "black"]
+                print " ♝ ".colorize(:background => :light_black)
+              when [Bishop, "white"]
+                print " ♗ ".colorize(:background => :light_black)
+              when [Knight, "black"]
+                print " ♞ ".colorize(:background => :light_black)
+              when [Knight, "white"]
+                print " ♘ ".colorize(:background => :light_black)
+              when [Pawn, "black"]
+                print " ♟ ".colorize(:background => :light_black)
+              when [Pawn, "white"]
+                print " ♙ ".colorize(:background => :light_black)
+              end
+            end
           else
-            print " "
+            if (row - 1) % 2 != (column - 1) % 2
+              print "   ".colorize(:background => :light_black)
+            else
+              print "   "
+            end
           end
         end
       end
@@ -461,7 +496,24 @@ class Game
 
   def play
     turn = 1
-
+    conversions = {
+      "a" => 0,
+      "b" => 1,
+      "c" => 2,
+      "d" => 3,
+      "e" => 4,
+      "f" => 5,
+      "g" => 6,
+      "h" => 7,
+      "8" => 0,
+      "7" => 1,
+      "6" => 2,
+      "5" => 3,
+      "4" => 4,
+      "3" => 5,
+      "2" => 6,
+      "1" => 7,
+    }
     turn_colors = ["black","white"]
     turn_color = turn_colors[0]
 
@@ -472,7 +524,7 @@ class Game
 
       puts "#{turn_color.capitalize} turn"
       puts "Enter the coordinates of the piece you would like to move:"
-      start_pos = gets.chomp.split(",").map { |num| num.to_i }
+      start_pos = gets.chomp.split("").reverse.map { |num| conversions[num] }
 
       if !@board[start_pos].nil? && @board[start_pos].color != turn_color
         puts "That is not your piece!"
@@ -480,7 +532,7 @@ class Game
       end
 
       puts "Enter the coordinates of the space you would like to move to:"
-      end_pos = gets.chomp.split(",").map { |num| num.to_i }
+      end_pos = gets.chomp.split("").map { |num| conversions[num] }
 
       begin
         @board.move(start_pos, end_pos)
