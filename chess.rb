@@ -259,10 +259,12 @@ class Board
   end
 
   def [](pos)
+    raise RuntimeError.new("Please enter a valid position.") if pos.any? {|el| el.nil?}
     self.grid[pos[0]][pos[1]]
   end
 
   def []=(pos, piece)
+    raise RuntimeError.new("Please enter a valid position.") if pos.any? {|el| el.nil?}
     self.grid[pos[0]][pos[1]] = piece
   end
 
@@ -522,17 +524,29 @@ class Game
 
       turn_color = turn_colors[turn % 2]
 
-      puts "#{turn_color.capitalize} turn"
-      puts "Enter the coordinates of the piece you would like to move:"
-      start_pos = gets.chomp.split("").reverse.map { |num| conversions[num] }
+      begin
+        puts "#{turn_color.capitalize} turn"
+        puts "Enter the coordinates of the piece you would like to move:"
+        start_pos = gets.chomp.split("").reverse.map { |num| conversions[num] }
 
-      if !@board[start_pos].nil? && @board[start_pos].color != turn_color
-        puts "That is not your piece!"
-        next
+        if !@board[start_pos].nil? && @board[start_pos].color != turn_color
+          puts "That is not your piece!"
+          next
+        end
+      rescue RuntimeError => e
+        puts e.message
+        retry
       end
 
-      puts "Enter the coordinates of the space you would like to move to:"
-      end_pos = gets.chomp.split("").map { |num| conversions[num] }
+      begin
+        puts "Enter the coordinates of the space you would like to move to:"
+        end_pos = gets.chomp.split("").map { |num| conversions[num] }
+
+        test = @board[end_pos]
+      rescue RuntimeError => e
+        puts e.message
+        retry
+      end
 
       begin
         @board.move(start_pos, end_pos)
