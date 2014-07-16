@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'colorize'
+require 'debugger'
 
 class Piece
   attr_accessor :pos, :board, :color
@@ -23,7 +24,7 @@ class Piece
     new_board = @board.deep_dup
     new_board.move!(self.pos, end_pos)
 
-    new_board.in_check?
+    new_board.in_check(self.color)
   end
 end
 
@@ -36,11 +37,12 @@ class SlidingPiece < Piece
 
   def moves
     valid_coords = []
-
+    #debugger
     self.deltas.each do |delta|
-      coords = @pos
+      coords = @pos.dup
 
-      until !(0...8).to_a.include?(coords[0]) || !(0...8).to_a.include?(coords[1])
+      while (0...8).to_a.include?(coords[0]+delta[0]) && (0...8).to_a.include?(coords[1]+delta[1])
+        coords = coords.dup
         coords[0] += delta[0]
         coords[1] += delta[1]
 
@@ -71,17 +73,19 @@ class SteppingPiece < Piece
     valid_coords = []
 
     self.deltas.each do |delta|
-      coords = @pos
+      coords = @pos.dup
       coords[0] += delta[0]
       coords[1] += delta[1]
 
-      if self.board.contains_friendly_piece?(@pos, coords)
-        break
-      elsif self.board.contains_enemy_piece?(@pos, coords)
-        valid_coords << coords
-        break
-      else
-        valid_coords << coords
+      if (0...8).to_a.include?(coords[0]) && (0...8).to_a.include?(coords[1])
+        if self.board.contains_friendly_piece?(@pos, coords)
+          next
+        elsif self.board.contains_enemy_piece?(@pos, coords)
+          valid_coords << coords
+          next
+        else
+          valid_coords << coords
+        end
       end
     end
 
@@ -194,7 +198,7 @@ class Pawn < SteppingPiece
         possible_deltas << [1,-1]
       end
     elsif self.color == "white"
-      possible_deltas << [0,1]
+      possible_deltas << [-1,0]
       if self.board.contains_enemy_piece?(@pos, [pos[0] - 1,pos[1] - 1])
         possible_deltas << [-1,-1]
       end
@@ -260,12 +264,14 @@ class Board
     unless self[self_coord].nil? || self[target_coord].nil?
       return self[self_coord].color != self[target_coord].color
     end
+    false
   end
 
   def contains_friendly_piece?(self_coord, target_coord)
-    unless self[self_coord].nil? || self[target_coord].nil?
+    if self[self_coord] && self[target_coord]
       return self[self_coord].color == self[target_coord].color
     end
+    false
   end
 
   def in_check(color)
@@ -302,30 +308,34 @@ class Board
       self.grid.each do |row|
         row.each do |space|
           unless space.nil?
-            return true if space.color == color && space.valid_moves.empty?
+            return false if space.color == color && !space.valid_moves.empty?
           end
         end
       end
+      return true
     end
 
     false
   end
 
   def move(start, end_pos)
+
     raise RuntimeError.new("You have no piece there") if self[start].nil?
     raise RuntimeError.new("You cannot move there") if !self[start].moves.include?(end_pos)
     raise RuntimeError.new("This puts you in check") if self[start].move_into_check?(end_pos)
 
-    self[end_pos] = self[start]
+    self[end_pos] = self[start].class.new(start, self.dup, self[start].color)
     self[start] = nil
+    self[end_pos].pos = end_pos.dup
   end
 
   def move!(start, end_pos)
     raise RuntimeError.new("You have no piece there") if self[start].nil?
     raise RuntimeError.new("You cannot move there") if !self[start].moves.include?(end_pos)
 
-    self[end_pos] = self[start]
+    self[end_pos] = self[start].class.new(start, self.dup, self[start].color)
     self[start] = nil
+    self[end_pos].pos = end_pos.dup
   end
 
   def deep_dup
@@ -437,6 +447,7 @@ class Game
   def play
     turn = 1
     turn_color = "white"
+
     until @board.checkmate?(turn_color)
       @board.render
 
@@ -461,11 +472,13 @@ class Game
       begin
         @board.move(start_pos, end_pos)
       rescue RuntimeError => e
+        p @board.checkmate?(turn_color)
         puts e.message
         next
       end
 
       turn += 1
+      #debugger
 
     end
   end
